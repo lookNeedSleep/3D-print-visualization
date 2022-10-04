@@ -28,7 +28,7 @@ ALLOWED_EXTENSIONS = set(['png', 'jpg', 'JPG', 'PNG', 'bmp'])
 # 设置静态文件缓存过期时间
 app.send_file_max_age_default = timedelta(seconds=1)
 
-
+# 主页
 @app.route('/index', methods=['GET', 'POST'])
 def GoToIndex():
     sliderValue = 0
@@ -57,10 +57,16 @@ def GoToIndex():
 
 
 def getMax():
+    '''
+    获取图片数量
+    '''
     return size(list(filter(countours_filter, os.listdir(imageUploadPath))))-1
 
 
 def allowed_file(filename):
+    '''
+    文件后缀名合法性判定
+    '''
     return '.' in filename and filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 
@@ -78,6 +84,10 @@ def return_img_stream(filePath):
 
 
 class Pic_str:
+    '''
+    （暂时弃用）
+    图片名唯一生成
+    '''
     def create_uuid(self):  # 生成唯一的图片的名称字符串，防止图片显示时的重名问题
         nowTime = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")  # 生成当前时间
         randomNum = random.randint(0, 100)  # 生成的随机整数n，其中0<=n<=100
@@ -88,6 +98,9 @@ class Pic_str:
 
 
 def countours_filter(f):
+    '''
+    轮廓图片件前缀名判定
+    '''
     if f[0:3] in ['sil']:
         return True
     else:
@@ -95,6 +108,9 @@ def countours_filter(f):
 
 
 def jpg_filter(f):
+    '''
+    上传原图片后缀名判定
+    '''
     if f[-4:] in ['.jpg'] and (f[0:3] not in ['sil']):
         return True
     else:
@@ -102,6 +118,10 @@ def jpg_filter(f):
 
 
 def imageListInit(fileExetension):
+    '''
+    获取图片列表
+    fileExetension：图片类型
+    '''
     imageList = []
     fileList = os.listdir(imageUploadPath)
     if fileExetension == 'jpg':
@@ -113,7 +133,7 @@ def imageListInit(fileExetension):
             [contourImages[i], return_img_stream(imageUploadPath + contourImages[i])])
     return imageList
 
-
+# 滑块数值获取轮廓图片
 @app.route('/getContourImage', methods=['GET', 'POST'])
 def getContourImage():
     sliderValue = request.form['data']
@@ -129,7 +149,7 @@ def getContourImage():
     }
     return jsonify(context)
 
-
+# 文件上传
 @app.route('/uploadFile', methods=['GET', 'POST'])
 def uploadFile():
     if request.method == 'POST':
@@ -151,7 +171,7 @@ def uploadFile():
         }
         return jsonify(context)
 
-
+# 读取图像列表，并返回字符流显示
 @app.route('/getImgList', methods=['GET', 'POST'])
 def getImgList():
     if request.method == 'POST':
@@ -166,7 +186,7 @@ def getImgList():
         }
         return jsonify(context)
 
-
+# 返回点击点相对应坐标
 @app.route('/coordinationDispose', methods=['GET', 'POST'])
 def coordinationDispose():
 
@@ -188,7 +208,7 @@ def coordinationDispose():
     }
     return jsonify(context)
 
-
+# 滑块更新
 @app.route('/updateSlider', methods=['GET', 'POST'])
 def updateSlider():
     context = {
@@ -201,7 +221,7 @@ def updateSlider():
     # os.remove(fileName)
     # url_for(函数，参数)
 
-
+# 轮廓拟合
 @app.route('/drawFixContour', methods=['GET', 'POST'])
 def drawFixContour():
     fileName = request.form['fileName']
@@ -223,7 +243,7 @@ def drawFixContour():
     }
     return jsonify(content)
 
-
+# 计算半径数据
 @app.route('/dataExport', methods=['GET', 'POST'])
 def dataExport():
     fy1 = strToNdarray(request.form['fy1'])

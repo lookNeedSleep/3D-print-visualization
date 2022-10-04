@@ -9,6 +9,11 @@ from sympy import *
 
 
 def sectionContourDraw(x, y):
+    '''
+    函数拟合
+    输入：(x, y)分别为拟合函数的坐标轴数据
+    输出：在原画布上添加该函数线段
+    '''
     if(x == [] or y == []):
         return ''
     Factor = np.polyfit(y, x, 8)
@@ -19,7 +24,15 @@ def sectionContourDraw(x, y):
 
 
 def getFinalContour(filePath, fileName, leftTopP, leftBottomP, rightBottomP):
-
+    '''
+    轮廓拟合
+    输入：filePath：轮廓文件路径
+          fileName：轮廓文件名称
+          leftTopP： 左上标记点
+          leftBottomP：左下标记点
+          rightBottomP：右下标记点
+    输出：对轮廓图像进行拟合，并保存该图像
+    '''
     img_org = cv.imread(filePath+fileName, cv.IMREAD_GRAYSCALE)
     img_org = cv.bitwise_not(img_org)
     ret, img_bin = cv.threshold(img_org, 128, 255, cv.THRESH_TRIANGLE)
@@ -96,6 +109,13 @@ def getFinalContour(filePath, fileName, leftTopP, leftBottomP, rightBottomP):
 
 
 def getSilhouette(fileName, fileExtension, imageSavePath):
+    '''
+    图像剪影获取（图片->边缘检测->轮廓提取）
+    输入：fileName：待处理图片文件名称
+     fileExtension：文件后缀名
+     imageSavePath：处理后轮廓图片保存路径
+    输出：保存处理后的轮廓图片
+    '''
     lowThreshold = 50
     heightThreshold = 500
     kernel_size = 3
@@ -150,6 +170,12 @@ def getSilhouette(fileName, fileExtension, imageSavePath):
 
 
 def getIntersection(factor1, factor2):
+    '''
+    交点计算
+    输入：factor1：函数1的因数 
+          factor2：函数2的因数
+    输出：返回两个函数的交点坐标
+    '''
     bottomLim = 250
     topLim = 800
     subDis = len(factor1)-len(factor2)
@@ -166,6 +192,12 @@ def getIntersection(factor1, factor2):
 
 
 def factorToPoly(Factor):
+    '''
+    （暂时弃用）
+    因数转为表达式字符串
+    输入：Factor：函数的因数 
+    输出：函数表达式字符串
+    '''
     string = ''
     for i in range(len(Factor)):
         if (str(Factor[i]))[0] != '-' and i != 0:
@@ -174,106 +206,3 @@ def factorToPoly(Factor):
     string += '-x'
     return string
 
-
-# def contourToImage(imageUploadPath, fileName):
-#     img_ndarray = np.array(Image.open(imageUploadPath+fileName))
-#     newImage = np.ones(
-#         img_ndarray.shape, dtype=np.uint8)
-#     img = [[], []]
-#     for i in range(newImage.shape[0]):
-#         for j in range(newImage.shape[1]):
-#             if img_ndarray[i][j] < 255:
-#                 y = newImage.shape[0] - i
-#                 img[1].append(y)
-#                 img[0].append(j)
-#                 if(img_ndarray[i+1][j] > 1 and (i+1) < newImage.shape[0]/4):
-#                     for k in range(1, int(newImage.shape[0]/8)):
-#                         if(img_ndarray[i+1+k][j] < 255):
-#                             for l in range(k+1):
-#                                 img_ndarray[i+1+l][j] = 0
-#                             break
-#     pylab.figure(figsize=(16, 9))
-#     pylab.plot(img[0], img[1], 'black')
-#     pylab.ylim(0, 720)
-#     pylab.xlim(0, 1280)
-#     pylab.xlabel('')
-#     pylab.ylabel('')
-#     pylab.axis('off')
-#     pylab.legend(loc=3, borderaxespad=0., bbox_to_anchor=(0, 0))
-#     pylab.margins(0.0)
-#     pylab.savefig(imageUploadPath+"first" +
-#                   fileName[:-4]+".jpg", dpi=80
-#                   # , bbox_inches='tight', pad_inches=0
-#                   )
-#     return np.array(img)
-
-
-# def CannyThreshold(fileName, fileExtension, imageSavePath):
-#     lowThreshold = 50
-#     heightThreshold = 500
-#     kernel_size = 3
-#     imageFilePath = ""
-#     imageFilePath = imageSavePath + fileName + "." + fileExtension
-#     img = cv.imread(imageFilePath)
-#     gray_img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-#     new_grayImage = gray_img
-#     detected_edges = cv.GaussianBlur(new_grayImage, (3, 3), 0)
-#     detected_edges = cv.Canny(detected_edges,
-#                               lowThreshold,
-#                               heightThreshold,
-#                               apertureSize=kernel_size)
-
-#     Contour = cv.findContours(
-#         detected_edges,
-#         1,
-#         1,
-#     )
-#     contours = Contour[0]
-#     imageCountour = np.ones(detected_edges.shape, np.uint8)*255
-#     cv.drawContours(imageCountour, contours, -1, (0, 255, 0), 1)
-#     cv.imwrite(imageSavePath+fileName+".bmp", imageCountour)
-#     drawContourImage(imageCountour, fileName)
-#     # return MatrixToImage(imageCountour)
-
-
-# def drawContourImage(image, fileName):
-#     x = np.array([])
-#     y = np.array([])
-
-#     imageHeight = image.shape[0]
-#     imageWidth = image.shape[1]
-#     newImage = np.ones(
-#         image.shape, dtype=np.uint8)
-#     for i in range(newImage.shape[0]):
-#         for j in range(newImage.shape[1]):
-#             if image[i][j] < 255:
-#                 y = np.append(y, imageHeight - i)
-#                 x = np.append(x, j)
-#     # return newImage
-
-#     pylab.rcParams['figure.figsize'] = (16, 9)
-#     plot1 = pylab.plot(x, y, 'b')
-#     # plot2 = pylab.plot(x, y_pred, 'r', label='fit values')
-#     pylab.title('')
-#     pylab.xlabel('')
-#     pylab.ylabel('')
-#     pylab.axis('off')
-#     # pylab.yticks([])
-
-#     pylab.legend(loc=3, borderaxespad=0., bbox_to_anchor=(0, 0))
-#     pylab.savefig('./contourImg/'+'con'+fileName+'.jpg', dpi=80)
-
-
-# def drawFirstContour(contourSavePath, fileName, leftContour, rightContour, img):
-#     pylab.figure(figsize=(16, 9))
-#     pylab.plot(img[0], img[1], 'b')
-
-#     sectionContourDraw(leftContour[0], leftContour[1])
-#     sectionContourDraw(rightContour[0], rightContour[1])
-#     pylab.ylim(0, 720)
-#     pylab.xlim(0, 1280)
-#     pylab.xlabel('')
-#     pylab.ylabel('')
-#     pylab.axis('off')
-#     pylab.legend(loc=3, borderaxespad=0., bbox_to_anchor=(0, 0))
-#     pylab.savefig(contourSavePath+fileName, dpi=80)

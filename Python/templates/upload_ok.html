@@ -1,0 +1,45 @@
+{% extends "template.html" %}
+
+{% block title%}
+Template_TEST
+{% endblock %}
+
+{% block body%}
+
+
+
+<h1>轮廓显示</h1>
+
+<img id="imageShowFram" width="50%" height="auto" src="data:image/jpeg;base64,{{ img_stream }}">
+
+
+<form method="POST" action="test">
+    <div id="slider"></div>
+    <input type="range" min={{min}} max={{max}} step="1" name="name_of_slider"
+        onchange="document.getElementById('imageShowFram').innerHTML = this.value" />
+    <label id="Label1" style="padding-left:20px;"></label>
+</form>
+
+<link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css">
+<style>
+    #slider {
+        margin: 10px;
+    }
+</style>
+
+<p>
+    <label>Price To:</label>
+    <input type="range" id="toPrice" value="450" min="0" max="500" step="1" oninput="" />
+    <label id="tPrice"></label>
+</p>
+
+
+
+
+<script>
+    // var sliderValue=document.getElementById('name_of_slider').value;
+    // console.log(sliderValue);
+</script>
+
+
+{% endblock %}

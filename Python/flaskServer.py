@@ -16,7 +16,7 @@ import base64
 
 app = Flask(__name__)
 app.config.from_object(flask_config)
-imageUploadPath = "./upload/images/"
+imageUploadPath = "..\\upload\\images\\"
 imageSaveExetension = ".bmp"
 contourSavePath = "./contourImg/"
 finalContourPath = "./midLine/"

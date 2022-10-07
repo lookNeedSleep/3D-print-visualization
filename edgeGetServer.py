@@ -169,6 +169,69 @@ def getSilhouette(fileName, fileExtension, imageSavePath):
     return "sil" + fileName+".jpg"
 
 
+# def getIntersection(factor1, factor2):
+#     '''
+#     交点计算
+#     输入：factor1：函数1的因数 
+#           factor2：函数2的因数
+#     输出：返回两个函数的交点坐标
+#     '''
+#     bottomLim = 250
+#     topLim = 800
+#     subDis = len(factor1)-len(factor2)
+#     for i in range(len(factor2)):
+#         factor1[i+subDis] -= factor2[i]
+#     p1 = np.poly1d(factor1)
+#     p2 = np.poly1d(factor2)
+#     y = 0
+#     for i in range(len(p1.roots)):
+#         if np.imag(p1.roots[i]) == 0 and np.real(p1.roots[i]) < topLim and np.real(p1.roots[i]) > bottomLim:
+#             y = np.real(p1.roots[i])
+#     x = p2(y)
+#     return [x, y]
+
+
+def factorToPoly(Factor):
+    '''
+    （暂时弃用）
+    因数转为表达式字符串
+    输入：Factor：函数的因数 
+    输出：函数表达式字符串
+    '''
+    string = ''
+    for i in range(len(Factor)):
+        if (str(Factor[i]))[0] != '-' and i != 0:
+            string += '+'
+        string += str(Factor[i])+'*y**'+str(len(Factor)-i-1)
+    string += '-x'
+    return string
+
+
+
+def dataExport(fy1, fy2, midLineFactor):
+    fy1 = strToNdarray(fy1)
+    fy2 = strToNdarray(fy2)
+    midLineFactor = strToNdarray(midLineFactor)
+    yList = np.array([600.0, 550.0, 500.0, 450.0, 400.0])
+    rList = []
+    for y in yList:
+        dis1 = -1.0
+        dis2 = -1.0
+        dis = [[], []]
+        normalL, x = normalLine(midLineFactor, y)
+        leftLineF = fy1.copy()
+        rightLineF = fy2.copy()
+        p = getIntersection(leftLineF, normalL)
+        dis1 = getDistance([x, y], p)
+        p = getIntersection(rightLineF, normalL)
+        dis2 = getDistance([x, y], p)
+        if(dis1 > 0 and dis2 > 0):
+            dis[0].append(dis1)
+            dis[1].append(dis2)
+        rList.append(dis)
+    return rList
+
+
 def getIntersection(factor1, factor2):
     '''
     交点计算
@@ -191,18 +254,31 @@ def getIntersection(factor1, factor2):
     return [x, y]
 
 
-def factorToPoly(Factor):
-    '''
-    （暂时弃用）
-    因数转为表达式字符串
-    输入：Factor：函数的因数 
-    输出：函数表达式字符串
-    '''
-    string = ''
-    for i in range(len(Factor)):
-        if (str(Factor[i]))[0] != '-' and i != 0:
-            string += '+'
-        string += str(Factor[i])+'*y**'+str(len(Factor)-i-1)
-    string += '-x'
-    return string
+def normalLine(factor, y):
+    f = np.poly1d(factor)
+    x = f(y)
+    derF = f.deriv(1)
+    derX = derF(y)
+    ky = -1/derX
+    const = x-ky*y
+    lineFactor = np.array([ky, const])
+    return lineFactor, x
+
+
+def getDistance(p1, p2):
+    return (((p1[0]-p2[0])**2+(p1[1]-p2[1])**2)**0.5).item()
+
+
+def strToNdarray(string):
+    string = string[1:-1]
+    strArray = string.split(' ')
+    numA = []
+    for i in range(len(strArray)):
+        if strArray[i] in ['']:
+            continue
+        if strArray[i][-2:] in ['\n']:
+            strArray[i] = strArray[i][:-3]
+        numA.append(float(strArray[i]))
+    arry = np.array(numA)
+    return arry
 

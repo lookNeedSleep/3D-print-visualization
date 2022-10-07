@@ -261,62 +261,15 @@ def drawFixContour():
 
 @app.route('/dataExport', methods=['GET', 'POST'])
 def dataExport():
-    fy1 = strToNdarray(request.form['fy1'])
-    fy2 = strToNdarray(request.form['fy2'])
-    midLineFactor = strToNdarray(request.form['fy3'])
-    yList = numpy.array([600.0, 550.0, 500.0, 450.0, 400.0])
-    rList = []
-    for y in yList:
-        dis1 = -1.0
-        dis2 = -1.0
-        dis = [[], []]
-        normalL, x = normalLine(midLineFactor, y)
-        leftLineF = fy1.copy()
-        rightLineF = fy2.copy()
-        p = edgeGetServer.getIntersection(leftLineF, normalL)
-        dis1 = getDistance([x, y], p)
-        p = edgeGetServer.getIntersection(rightLineF, normalL)
-        dis2 = getDistance([x, y], p)
-        if(dis1 > 0 and dis2 > 0):
-            dis[0].append(dis1)
-            dis[1].append(dis2)
-        rList.append(dis)
-
+    fy1 = (request.form['fy1'])
+    fy2 = (request.form['fy2'])
+    midLineFactor = (request.form['fy3'])
     content = {
-        "rList": rList,
+        "rList": edgeGetServer.dataExport(fy1,fy2,midLineFactor),
         "message": "ok",
     }
-
     return jsonify(content)
 
-
-def normalLine(factor, y):
-    f = numpy.poly1d(factor)
-    x = f(y)
-    derF = f.deriv(1)
-    derX = derF(y)
-    ky = -1/derX
-    const = x-ky*y
-    lineFactor = numpy.array([ky, const])
-    return lineFactor, x
-
-
-def getDistance(p1, p2):
-    return (((p1[0]-p2[0])**2+(p1[1]-p2[1])**2)**0.5).item()
-
-
-def strToNdarray(string):
-    string = string[1:-1]
-    strArray = string.split(' ')
-    numA = []
-    for i in range(len(strArray)):
-        if strArray[i] in ['']:
-            continue
-        if strArray[i][-2:] in ['\n']:
-            strArray[i] = strArray[i][:-3]
-        numA.append(float(strArray[i]))
-    arry = numpy.array(numA)
-    return arry
 
 
 if __name__ == '__main__':

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>先做一个柱状图</title>
+</head>
+
+<body>
+    <svg id="main" width="500" height="500"></svg>
+
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.0.1/dist/d3.min.js"></script>
+    <script>
+        const svg = d3.select("#main")
+        const margin = { top: 30, right: 30, bottom: 30, left: 30 }
+        const width = svg.attr('width')
+        const height = svg.attr('height')
+        var xDomainMax = 10
+        var xRangeMax = 250
+        var yDomainMax = 10
+        var yRangeMax = 250
+        const data = [
+            [1, 8.272621456888963, 8.26034075321312]
+            , [2, 6.7360691786211735, 6.776318354616044]
+            , [3, 6.114083114666231, 6.067413490258256]
+            , [4, 5.993534080828889, 6.042369470394204]
+            , [5, 5.860373334287812, 5.763792373627028]
+        ]
+        const innerHeight = height - margin.top - margin.bottom
+        const innerWidth = width - margin.left - margin.right
+
+        const xScale = d3.scaleLinear()
+            .domain([0, xDomainMax])
+            .range([0, xRangeMax])
+
+        const yScale = d3.scaleLinear()
+            .domain([0, yDomainMax])
+            .range([yRangeMax, 0])
+
+        const dataTableG = svg.append('g')
+            .attr('id', 'maingroup')
+            .attr('transform', `translate(${margin.top}, ${margin.left})`)
+
+        const yAxis = d3.axisLeft(yScale)
+        dataTableG.append('g').call(yAxis)
+
+
+        const xAxis = d3.axisBottom(xScale)
+        dataTableG.append('g').call(xAxis)
+            .attr('transform', "translate(0, " + yRangeMax + ")")
+
+        const line = d3.line()
+            .defined(d => !isNaN(d[0]))
+            .x((d, i) => xScale(d[0]))
+            .y(d => yScale(d[1]))
+
+        dataTableG.append("path")
+            .attr("fill", "none")
+            .attr("stroke", "steelblue")
+            .attr("stroke-width", 1.5)
+            .attr("stroke-linejoin", "round")
+            .attr("stroke-linecap", "round")
+            .attr('d', line(data))
+
+        dataTableG.selectAll("circle")
+            .data(data)
+            .enter()
+            .append("circle")
+            .attr("cx", function (d) { return xScale(d[0]) })
+            .attr("cy", function (d) { return yScale(d[1]) })
+            .attr("r", "2")
+            .attr("fill", "green");//得到点，并画出来
+
+    </script>
+</body>
+
+</html>

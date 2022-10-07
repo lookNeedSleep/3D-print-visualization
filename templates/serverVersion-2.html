@@ -110,7 +110,7 @@ Template_TEST
     var leftTopP, leftBottomP, rightBottomP = []
     var isOk = false
     var fy1, fy2, fy3
-    var spacing = 0
+    var spacing = 1
     function sliderGetImage() {
         data = $('#name_of_slider').val()
         if (data == '') {
@@ -334,51 +334,52 @@ Template_TEST
         function drawLineChart(data) {
             var svgHeight = 800
             var svgWidth = 800
-            var leftDataList = []
+            var xDomainMax = 10
+            var xRangeMax = 250
+            var yDomainMax = 10
+            var yRangeMax = 250
+            // var leftDataList = []
+            var dataList = []
             for (var i = 0; i < data.length; i++) {
-                var leftDataU = {}
-                var rightDataU = {}
-                leftDataU['x'] = spacing * (i + 1)
-                leftDataU['y'] = data[i][0]
-                rightDataU['x'] = spacing * (i + 1)
-                rightDataU['y'] = data[i][1]
-                leftDataList.push(leftDataU)
+                var dataU = []
+                dataU.push(spacing * (i + 1), data[i][0][0], data[i][1][0])
+                dataList.push(dataU)
             }
+            console.log(dataList);
             var dataTableG = d3.select('#dataTable').append('svg')
                 .attr("width", 500)
                 .attr("height", 500)
                 .append('g')
             var xscale = d3.scaleLinear()
-                .domain([0, 800])
-                .range([0, 300])
+                .domain([0, xDomainMax])
+                .range([0, xRangeMax])
             var xAixs = d3.axisBottom(xscale)
             var yscale = d3.scaleLinear()
-                .domain([0, 800])
-                .range([800, 0]);//定义y轴的定义域和值域
+                .domain([0, yDomainMax])
+                .range([yRangeMax, 0]);//定义y轴的定义域和值域
             var yAixs = d3.axisLeft(yscale);//坐标轴的类型是底部
             dataTableG.append("g")
-                // .attr("transform", "translate(0,500)")
+                .attr("transform", "translate(0," + yRangeMax + ")")
                 .call(xAixs);//这一步就是把你设置好的x轴信息显示出来
             dataTableG.append("g")
                 // .attr("transform", "translate(0,0)")
                 .call(yAixs);//这一步就是把你设置好的y轴信息显示出来
 
             var line = d3.line()
-                .x(function (d) { return xscale(d.x) })
-                .y(function (d) { return yscale(d.y) })
+                .x(function (d) { return xscale(d[0]) })
+                .y(function (d) { return yscale(d[1]) })
                 .curve(d3.curveLinear);
-            dataTableG.append("g")
-                .insert("path")
-                .attr("d", line(data))
+            dataTableG.append("path")
+                .attr("d", line(dataList))
                 .attr("stroke", "red")
                 .attr("stroke-width", "1")
                 .attr("fill", "none");//通过line得到数值，进行画线，其中画的是折线还是平滑的线是curve(）函数里面的参数决定的
             dataTableG.selectAll("circle")
-                .data(data)
+                .data(dataList)
                 .enter()
                 .append("circle")
-                .attr("cx", function (d) { return xscale(d.x) })
-                .attr("cy", function (d) { return yscale(d.y) })
+                .attr("cx", function (d) { return xscale(d[0]) })
+                .attr("cy", function (d) { return yscale(d[1]) })
                 .attr("r", "2")
                 .attr("fill", "green");//得到点，并画出来
 

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.0.1/dist/d3.min.js"></script>
+
+    <script>
+        // 定义数据集
+        var dataset = [2, 10, 35, 60, 70, 100, 90]
+
+        // 定义图表画布参数
+        var width = 800
+        var height = 400
+        var padding = 30
+        var svg = d3.select('#body')
+            .append('svg')
+            .attr('width', width)
+            .attr('height', height)
+
+        // 定义坐标轴
+        var xScale = d3.scaleLinear()
+            .domain([0, dataset.length - 1])
+            .range([0, width - padding * 2])
+        var xAxis = d3.axisBottom(xScale).ticks(dataset.length)
+
+        var yScale = d3.scaleLinear()
+            .domain([0, d3.max(dataset)])
+            .range([height - padding * 2, 0])
+        var yAxis = d3.axisLeft(yScale)
+
+        // 绘制坐标轴
+        svg.append('g').call(xAxis)
+            .attr('transform', 'translate(40, ' + (height - padding) + ')')
+        svg.append('g').call(yAxis)
+            .attr('transform', 'translate(40, ' + padding + ')')
+
+        // 绘制折线
+        var line = svg.append('g')
+            .attr('transform', 'translate(40, ' + padding + ')')
+
+        line.append('path')
+            .datum(dataset)
+            .attr('fill', 'none')
+            .attr('stroke', 'blue')
+            .attr('stroke-width', 1)
+            .attr('d', d3.line().x((v, i) => {
+                return xScale(i)
+            }).y((v, i) => {
+                return yScale(v)
+            }))
+
+        // 绘制数据坐标圆点
+        line.selectAll('circle').data(dataset).enter()
+            .append('circle')
+            .attr('cx', (v, i) => { return xScale(i) })
+            .attr('cy', (v, i) => { return yScale(v) })
+            .attr('r', 5)
+            .attr('fill', 'gold')
+            .attr('stroke', 'blue')
+
+            // 定义鼠标移入事件
+            .on('mouseover', function (e, v) {
+                // 放大坐标圆点
+                d3.select(this).attr('r', 7)
+
+                // 在光标上方显示坐标值
+                var pos = d3.pointer(e)
+                svg.append('text')
+                    .text(v)
+                    .attr('class', 'tooltip')
+                    .attr('x', pos[0] + 50)
+                    .attr('y', pos[1] + 20)
+                    .attr('text-anchor', 'end')
+            })
+
+            // 定义鼠标移出事件
+            .on('mouseout', function () {
+                // 还原坐标圆点
+                d3.select(this).attr('r', 5)
+                // 移除坐标值提示标签
+                d3.select('.tooltip').remove()
+            })
+    </script>
+</body>
+
+</html>

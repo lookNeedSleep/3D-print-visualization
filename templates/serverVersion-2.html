@@ -34,7 +34,7 @@ Template_TEST
     </div>
     <br>
     <div id="dataTable">
-        <a onclick="dataExport()"> 数据图表化 </a>
+        <a onclick="drawRadiusPic()"> 数据图表化 </a>
 
     </div>
 
@@ -325,7 +325,6 @@ Template_TEST
         data.fy1 = fy1
         data.fy2 = fy2
         data.fy3 = fy3
-        console.log(data);
         $.post(url, data, function success(res) {
             console.log(res.rList);
             drawLineChart(res.rList)
@@ -385,6 +384,20 @@ Template_TEST
 
             // dataTableG.append()
         }
+    }
+
+    function drawRadiusPic() {
+        url = '/drawRadiusPic'
+        var data = {}
+        data.fy1 = fy1
+        data.fy2 = fy2
+        data.fy3 = fy3
+        data.leftTopP = leftTopP
+        data.leftBottomP = leftBottomP
+        data.rightBottomP = rightBottomP
+        $.post(url, data, function success(res) {
+            $('#imageShowFram').attr('src', "data:image/bmp;base64," + res.contourImage)
+        })
     }
 </script>
 

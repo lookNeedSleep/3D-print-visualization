@@ -265,11 +265,29 @@ def dataExport():
     fy2 = (request.form['fy2'])
     midLineFactor = (request.form['fy3'])
     content = {
-        "rList": edgeGetServer.dataExport(fy1,fy2,midLineFactor),
+        "rList": edgeGetServer.dataExport(fy1, fy2, midLineFactor),
         "message": "ok",
     }
     return jsonify(content)
 
+
+@app.route('/drawRadiusPic', methods=['GET', 'POST'])
+def drawRadiusPic():
+    fy1 = (request.form['fy1'])
+    fy2 = (request.form['fy2'])
+    midLineFactor = (request.form['fy3'])
+    leftTopP = [int(request.form.getlist('leftTopP[]')[0]),
+                int(request.form.getlist('leftTopP[]')[1])]
+    leftBottomP = [int(request.form.getlist('leftBottomP[]')[0]), int(
+        request.form.getlist('leftBottomP[]')[1])]
+    rightBottomP = [int(request.form.getlist('rightBottomP[]')[0]), int(
+        request.form.getlist('rightBottomP[]')[1])]
+
+    content = {
+        "contourImage": edgeGetServer.drawRadiusPic(fy1, fy2, midLineFactor, leftTopP, leftBottomP, rightBottomP),
+        "message": "ok",
+    }
+    return jsonify(content)
 
 
 if __name__ == '__main__':

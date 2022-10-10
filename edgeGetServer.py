@@ -1,7 +1,9 @@
+import base64
 from email import message
+from io import BytesIO
 from multiprocessing.pool import IMapUnorderedIterator
 import cv2 as cv
-from matplotlib.pyplot import contour
+from matplotlib.pyplot import contour, ylim
 import numpy as np
 from PIL import Image
 import pylab
@@ -17,10 +19,14 @@ def sectionContourDraw(x, y):
     if(x == [] or y == []):
         return ''
     Factor = np.polyfit(y, x, 8)
+    drawFunction(Factor, y)
+    return Factor
+
+
+def drawFunction(Factor, y):
     F = np.poly1d(Factor)
     fX = F(y)
     pylab.plot(fX, y,  'black', label='')
-    return Factor
 
 
 def getFinalContour(filePath, fileName, leftTopP, leftBottomP, rightBottomP):
@@ -169,33 +175,11 @@ def getSilhouette(fileName, fileExtension, imageSavePath):
     return "sil" + fileName+".jpg"
 
 
-# def getIntersection(factor1, factor2):
-#     '''
-#     交点计算
-#     输入：factor1：函数1的因数 
-#           factor2：函数2的因数
-#     输出：返回两个函数的交点坐标
-#     '''
-#     bottomLim = 250
-#     topLim = 800
-#     subDis = len(factor1)-len(factor2)
-#     for i in range(len(factor2)):
-#         factor1[i+subDis] -= factor2[i]
-#     p1 = np.poly1d(factor1)
-#     p2 = np.poly1d(factor2)
-#     y = 0
-#     for i in range(len(p1.roots)):
-#         if np.imag(p1.roots[i]) == 0 and np.real(p1.roots[i]) < topLim and np.real(p1.roots[i]) > bottomLim:
-#             y = np.real(p1.roots[i])
-#     x = p2(y)
-#     return [x, y]
-
-
 def factorToPoly(Factor):
     '''
     （暂时弃用）
     因数转为表达式字符串
-    输入：Factor：函数的因数 
+    输入：Factor：函数的因数
     输出：函数表达式字符串
     '''
     string = ''
@@ -205,7 +189,6 @@ def factorToPoly(Factor):
         string += str(Factor[i])+'*y**'+str(len(Factor)-i-1)
     string += '-x'
     return string
-
 
 
 def dataExport(fy1, fy2, midLineFactor):
@@ -235,7 +218,7 @@ def dataExport(fy1, fy2, midLineFactor):
 def getIntersection(factor1, factor2):
     '''
     交点计算
-    输入：factor1：函数1的因数 
+    输入：factor1：函数1的因数
           factor2：函数2的因数
     输出：返回两个函数的交点坐标
     '''
@@ -282,3 +265,62 @@ def strToNdarray(string):
     arry = np.array(numA)
     return arry
 
+
+def numList(p1, p2):
+    if p1 < p2:
+        return (range(int(p1), int(p2)))
+    else:
+        return (range(int(p2), int(p1)))
+
+
+def drawNormalLine(yFactor, x):
+    xFactor = np.array([1/yFactor[0], -yFactor[1]/yFactor[0]])
+    print(yFactor, xFactor)
+    F = np.poly1d(xFactor)
+    fY = F(x)
+    pylab.plot(x, fY,  'red', label='')
+
+
+def drawRadiusPic(fy1, fy2, midLineFactor, leftTopP, leftBottomP, rightBottomP):
+    leftLineF = strToNdarray(fy1)
+    rightLineF = strToNdarray(fy2)
+    midLineFactor = strToNdarray(midLineFactor)
+    pylab.figure(figsize=(16, 9))
+    drawFunction(leftLineF, numList(leftTopP[1], leftBottomP[1]))
+    drawFunction(rightLineF, numList(leftTopP[1], rightBottomP[1]))
+    drawFunction(midLineFactor, numList(leftTopP[1], rightBottomP[1]))
+    yList = np.array([600.0, 550.0, 500.0, 450.0, 400.0, 350])
+    for y in yList:
+        normalLineF, x = normalLine(midLineFactor, y)
+        xRange = numList((getIntersection(leftLineF.copy(), normalLineF)[0]),
+                         (getIntersection(rightLineF.copy(), normalLineF)[0]))
+        print(xRange)
+        drawNormalLine(normalLineF, xRange)
+    pylab.ylim(0, 720)
+    pylab.xlim(0, 1280)
+    pylab.xlabel('')
+    pylab.ylabel('')
+    pylab.axis('off')
+    pylab.margins(0.0)
+    # sio = BytesIO()
+    # pylab.savefig(sio, format='png', bbox_inches='tight', pad_inches=0.0)
+    # data = base64.encodebytes(sio.getvalue()).decode()
+    # src = str(data)
+    # pylab.close()
+    # sio.close()
+    pylab.savefig('./midLine/final.jpg', dpi=110,
+                  bbox_inches='tight', pad_inches=0)
+    return return_img_stream('./midLine/final.jpg')
+
+
+# 图片转为字节流
+def return_img_stream(filePath):
+    """
+    工具函数:
+    获取本地图片流
+    :param img_local_path:文件单张图片的本地绝对路径
+    :return: 图片流
+    """
+    with open(filePath,  'rb',) as img_f:
+        img_stream = base64.b64encode(img_f.read()).decode('ascii')
+    return img_stream

@@ -13,10 +13,12 @@ imageSavePath = "./upload/images/"
 
 def CannyThreshold(imageName):
     # global new_gary_image
-    # lowThreshold = cv2.getTrackbarPos('Min threshold', 'canny demmo')
-    # heightThreshold = cv2.getTrackbarPos('Max threshold', 'canny demmo')
-    lowThreshold = 50
-    heightThreshold = 500
+
+    # lowThreshold = 50
+    # heightThreshold = 500
+    lowThreshold = cv2.getTrackbarPos('Min threshold', 'canny demmo')
+    heightThreshold = cv2.getTrackbarPos('Max threshold', 'canny demmo')
+
     detected_edges = cv2.GaussianBlur(new_grayImage, (3, 3), 0)
     # detected_edges=cv2.medianBlur(new_grayImage,3)
     detected_edges = cv2.Canny(detected_edges,
@@ -38,10 +40,10 @@ def CannyThreshold(imageName):
     cv2.drawContours(imageCountour, contours, -1, (1, 0, 0), cv2.FILLED)
 
     # drawContour(contours)
-    drawContourImage(imageCountour)
+    # drawContourImage(imageCountour)
     cv2.imshow('canny demmo', imageCountour)
 
-    cv2.imwrite(imageSavePath+str(imageName)+".bmp", imageCountour)
+    # cv2.imwrite(imageSavePath+str(imageName)+".bmp", imageCountour)
 
 
 def drawContour(contours):
@@ -215,20 +217,20 @@ kernel_size = 3
 max_kernel_size = 9
 gary_mode = 0
 gary_mode_Max = 5
-# img = cv2.imread('./jpg/3.jpg')
-# gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-# new_grayImage = gray_img
-# cv2.namedWindow('canny demmo')
+img = cv2.imread('./upload/images/1.jpg')
+gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+new_grayImage = gray_img
+cv2.namedWindow('canny demmo')
 
-# cv2.createTrackbar('Min threshold', 'canny demmo',
-#                    lowThreshold, max_lowThreshold, CannyThreshold)
-# cv2.createTrackbar('Max threshold', 'canny demmo',
-#                    heightThreshold, max_heightThreshold, CannyThreshold)
-# cv2.createTrackbar('contour_Mode', 'canny demmo',
-#                    mode, mode_n, CannyThreshold)
+cv2.createTrackbar('Min threshold', 'canny demmo',
+                   lowThreshold, max_lowThreshold, CannyThreshold)
+cv2.createTrackbar('Max threshold', 'canny demmo',
+                   heightThreshold, max_heightThreshold, CannyThreshold)
+cv2.createTrackbar('contour_Mode', 'canny demmo',
+                   mode, mode_n, CannyThreshold)
 
-# CannyThreshold("0")  # initialization
-img = np.array(Image.open("./upload/images/1.bmp"))
-drawContourImage(img)
+CannyThreshold("0")  # initialization
+# img = np.array(Image.open("./upload/images/1.bmp"))
+# drawContourImage(img)
 if cv2.waitKey(0) == 27:
     cv2.destroyAllWindows()

@@ -55,6 +55,7 @@ def getFinalContour(filePath, fileName, leftTopP, leftBottomP, rightBottomP):
     midLine = [[], []]
     leftContour = [[], []]
     rightContour = [[], []]
+    # 内轮廓为白色，其中中心线为黑色
     img_array = np.array(img_bin-img_thinning)
     bottom = min(rightBottomP[1], leftBottomP[1])
     for i in range(img_array.shape[0]):
@@ -67,26 +68,30 @@ def getFinalContour(filePath, fileName, leftTopP, leftBottomP, rightBottomP):
         leftCJ = 1
         rightCJ = 1
         for x in range(img_array.shape[1]):
+            # 转换为图像高度
             y = img_array.shape[0]-i
             if(img_array[i][x] == 255):
                 image[0].append(x)
                 image[1].append(y)
+            # 左轮廓录入
             if(img_array[i][x] == 255 and leftCJ == 1 and y < leftTopP[1] and y > leftBottomP[1] and x > leftTopP[0]):
                 leftContour[0].append(x)
                 leftContour[1].append(y)
                 leftCJ = 0
+                # 右轮廓录入
             if(img_array[i][img_array.shape[1] - x-1] == 255 and rightCJ == 1 and y > rightBottomP[1] and y < leftTopP[1]):
                 rightContour[0].append(img_array.shape[1] - x-1)
                 rightContour[1].append(y)
                 rightCJ = 0
+                # 中心线左值
             if(img_array[i][x] == 255 and leftJ == 1 and leftCJ == 0):
                 leftP = [x, y]
                 leftJ = 0
+                # 中心线右值
             if(img_array[i][img_array.shape[1]-x-1] == 255 and rightJ == 1 and img_array.shape[1]-x-1 < rightBottomP[0] and rightCJ == 0):
                 rightP = [img_array.shape[1]-x-1, y]
                 rightJ = 0
-            # if(leftJ == 0 and rightJ == 0):
-            #     break
+  
         if(leftP == [] or rightP == []):
             continue
         midLine[0].append((leftP[0]+rightP[0])/2)
@@ -123,7 +128,7 @@ def getSilhouette(fileName, fileExtension, imageSavePath):
     输出：保存处理后的轮廓图片
     '''
     lowThreshold = 50
-    heightThreshold = 500
+    heightThreshold = 150
     kernel_size = 3
     imageFilePath = ""
     imageFilePath = imageSavePath + fileName + "." + fileExtension

@@ -5,7 +5,7 @@ from multiprocessing.pool import IMapUnorderedIterator
 import cv2 as cv
 from matplotlib.pyplot import contour, ylim
 import numpy as np
-from PIL import Image
+import scipy.signal as signal
 import pylab
 from sympy import *
 
@@ -88,10 +88,10 @@ def getFinalContour(filePath, fileName, leftTopP, leftBottomP, rightBottomP):
                 leftP = [x, y]
                 leftJ = 0
                 # 中心线右值
-            if(img_array[i][img_array.shape[1]-x-1] == 255 and rightJ == 1 and img_array.shape[1]-x-1 < rightBottomP[0] and rightCJ == 0):
+            if(img_array[i][img_array.shape[1]-x-1] == 255 and rightJ == 1 and rightCJ == 0 and img_array.shape[1]-x-1 < rightBottomP[0]):
                 rightP = [img_array.shape[1]-x-1, y]
                 rightJ = 0
-  
+
         if(leftP == [] or rightP == []):
             continue
         midLine[0].append((leftP[0]+rightP[0])/2)
@@ -149,26 +149,60 @@ def getSilhouette(fileName, fileExtension, imageSavePath):
     contours = Contour[0]
     imageCountour = np.ones(detected_edges.shape, np.uint8)*255
     cv.drawContours(imageCountour, contours, -1, (0, 255, 0), 1)
-    img_ndarray = np.array(imageCountour)
+    img_array = np.array(imageCountour)
     newImage = np.ones(
-        img_ndarray.shape, dtype=np.uint8)
+        img_array.shape, dtype=np.uint8)
     img = [[], []]
+    pixelStatistics=[]
+    leftContour = [[], []]
+    rightContour = [[], []]
     for i in range(newImage.shape[0]):
-        for j in range(newImage.shape[1]):
-            if img_ndarray[i][j] < 255:
+        # J为Judge缩写,C表轮廓缩写
+        leftCJ = 1
+        rightCJ = 1
+        for x in range(newImage.shape[1]):
+            if img_array[i][x] < 255:
                 y = newImage.shape[0] - i
                 img[1].append(y)
-                img[0].append(j)
-                if(img_ndarray[i+1][j] > 1 and (i+1) < newImage.shape[0]/4):
+                img[0].append(x)
+                if leftCJ == 1:
+                    leftContour[0].append(i)
+                    leftContour[1].append(y)
+                    leftCJ = 0
+                # 右轮廓录入
+                if img_array[i][img_array.shape[1] - i-1] == 255 and rightCJ == 1:
+                    rightContour[0].append(img_array.shape[1] - i-1)
+                    rightContour[1].append(y)
+                    rightCJ = 0
+
+                # 缺口修补
+                if((i+1) < newImage.shape[0]/4 and img_array[i+1][x] > 1):
                     for k in range(1, int(newImage.shape[0]/8)):
-                        if(img_ndarray[i+1+k][j] < 255):
+                        if(img_array[i+1+k][x] < 255):
                             for l in range(k+1):
-                                img_ndarray[i+1+l][j] = 0
+                                img_array[i+1+l][x] = 0
                             break
+        contourIndex = len(rightContour[0])
+        if i == contourIndex-1:
+            pixelStatistics.append(rightContour[0][i]-leftContour[0][i])
+    print(len(rightContour[0]))
+    der1Contour = np.diff(pixelStatistics)
+    topLimit = np.array(signal.argrelextrema(der1Contour, np.less)[0])[0]
+    # 右轮廓判定后，下一有效值必为左边界，故可以不判定
+    rightContourLimitJ = 1
+    for i in signal.argrelextrema(der1Contour, np.greater)[0]:
+        if der1Contour[i] > 200:
+            if rightContourLimitJ == 1:
+                rightContourLimit = i
+                rightContourLimitJ = 0
+            else:
+                leftContourLimit = i
+                break
+
     pylab.figure(figsize=(16, 9))
     pylab.plot(img[0], img[1], 'black')
-    pylab.ylim(0, 720)
-    pylab.xlim(0, 1280)
+    # pylab.ylim(0, 720)
+    pylab.xlim(leftContourLimit, 1280)
     pylab.xlabel('')
     pylab.ylabel('')
     pylab.axis('off')

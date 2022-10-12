@@ -146,8 +146,8 @@ def getFinalContour(filePath, fileName):
             # 转换为图像高度
             y = img_array.shape[0]-i
             if img_array[i][x] == 255:
-                image[0].append(x)
-                image[1].append(y)
+                # image[0].append(x)
+                # image[1].append(y)
                 # 左轮廓录入
                 if leftCJ == 1:
                     leftContour[0].append(x)
@@ -168,10 +168,9 @@ def getFinalContour(filePath, fileName):
                 rightJ = 0
             if rightJ == 0 and leftCJ == 0 and rightCJ == 0 and leftCJ == 0:
                 break
-        if(leftP == [] or rightP == []):
-            continue
-        midLine[0].append((leftP[0]+rightP[0])/2)
-        midLine[1].append((leftP[1]+rightP[1])/2)
+        if leftP != [] and rightP != []:
+            midLine[0].append((leftP[0]+rightP[0])/2)
+            midLine[1].append((leftP[1]+rightP[1])/2)
         contourIndex = len(rightContour[0])
         if i == contourIndex-1:
             pixelStatistics.append(rightContour[0][i]-leftContour[0][i])
@@ -190,6 +189,8 @@ def getFinalContour(filePath, fileName):
                 leftContourLimit = i
                 break
 
+    print(rightContourLimit, leftContourLimit,
+          len(rightContour[0]), len(leftContour[0]))
     rightContour[0] = rightContour[0][topLimit:rightContourLimit]
     rightContour[1] = rightContour[1][topLimit:rightContourLimit]
 
@@ -396,7 +397,7 @@ def getSilhouette(fileName, fileExtension, imageSavePath):
     # plt.show()
 
     for i in range(len(img[1])):
-        if img[1][i] > leftContourLimit:
+        if img[1][i] == newImage.shape[0]-leftContourLimit:
             img[0] = img[0][:i]
             img[1] = img[1][:i]
             break
@@ -413,7 +414,7 @@ def getSilhouette(fileName, fileExtension, imageSavePath):
     pylab.show()
     pylab.savefig(imageSavePath+"sil" +
                   fileName+".jpg", dpi=110, bbox_inches='tight', pad_inches=0)
-    # return "sil" + fileName+".jpg"
+    return "sil" + fileName+".jpg"
 
 
 lowThreshold = 50
@@ -432,7 +433,7 @@ gary_mode_Max = 5
 img = cv2.imread('./upload/images/1.jpg')
 silimg = cv2.imread('./upload/images/sil1.jpg')
 getSilhouette('1', 'jpg', './upload/images/')
-# getFinalContour('./upload/images/', 'sil1.jpg')
+# getFinalContour('./upload/images/', 'sil2.jpg')
 
 gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 new_grayImage = gray_img

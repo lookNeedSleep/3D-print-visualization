@@ -1,14 +1,13 @@
 import base64
-from email import message
 from io import BytesIO
-from multiprocessing.pool import IMapUnorderedIterator
 import cv2 as cv
 from matplotlib.pyplot import contour, ylim
 import numpy as np
 import scipy.signal as signal
 import pylab
 from sympy import *
-
+from scipy.signal import savgol_filter
+from collections import Counter
 
 def sectionContourDraw(x, y):
     '''
@@ -119,6 +118,54 @@ def getFinalContour(filePath, fileName, leftTopP, leftBottomP, rightBottomP):
     return fy1, fy2, fy3, message
 
 
+def splitArray(inputYArray, inputXArray):
+    returnArray = [[], []]
+    n = 0
+    for i in range(len(inputYArray)-1):
+        # print(inputYArray[i] ,inputYArray[i+1])
+        if inputYArray[i] != inputYArray[i+1]:
+            returnArray[0].append(inputXArray[n:i+1])
+            returnArray[1].append(inputYArray[n:i+1])
+            n = i+1
+    returnArray.append(inputYArray[n:])
+    return returnArray
+
+
+# 拟合评估
+def fittingAssessment(inputArray1, inputArray2):
+    return abs_sum(list(np.array(inputArray1)-np.array(inputArray2)))
+
+
+# 列表元素绝对值之和
+def abs_sum(L):
+    if L == []:
+        return 0
+    return abs_sum(L[1:]) + abs(L[0])
+
+
+def getBottomLineByColumn(imgMat):
+    img = imgMat
+    xy = list(np.where(img.T <= 1))
+    xy = splitArray(xy[0], xy[1])
+    leftContour = [[], []]
+    rightContour = [[], []]
+    pixelStatistics = []
+
+    for i in range(len(xy[1])):
+        leftContour[0].append(xy[0][i][0])
+        rightContour[0].append(xy[0][i][-1])
+        pixelStatistics.append(xy[0][i][-1]-xy[0][i][0])
+
+    pixelStatistics = savgol_filter(pixelStatistics, 5, 3)
+    der1Contour = np.diff(pixelStatistics)
+    leftFirstMutation = np.array(
+        signal.argrelextrema(der1Contour, np.greater)[0])[0]
+    leftContourLimit = list(
+        Counter(leftContour[0][:leftFirstMutation]).keys())[0]
+    #     return img.shape[0]- leftContourLimit
+    return leftContourLimit
+
+
 def getSilhouette(fileName, fileExtension, imageSavePath):
     '''
     图像剪影获取（图片->边缘检测->轮廓提取）
@@ -149,69 +196,53 @@ def getSilhouette(fileName, fileExtension, imageSavePath):
     contours = Contour[0]
     imageCountour = np.ones(detected_edges.shape, np.uint8)*255
     cv.drawContours(imageCountour, contours, -1, (0, 255, 0), 1)
-    img_array = np.array(imageCountour)
-    newImage = np.ones(
-        img_array.shape, dtype=np.uint8)
-    img = [[], []]
-    pixelStatistics=[]
+    img = np.array(imageCountour)
+    xy = list(np.where(img < 128))
+    imgData = [[], []]
+    imgData[0] = xy[1]
+    imgData[1] = xy[0]
+    xy = splitArray(xy[0], xy[1])
     leftContour = [[], []]
     rightContour = [[], []]
-    for i in range(newImage.shape[0]):
-        # J为Judge缩写,C表轮廓缩写
-        leftCJ = 1
-        rightCJ = 1
-        for x in range(newImage.shape[1]):
-            if img_array[i][x] < 255:
-                y = newImage.shape[0] - i
-                img[1].append(y)
-                img[0].append(x)
-                if leftCJ == 1:
-                    leftContour[0].append(i)
-                    leftContour[1].append(y)
-                    leftCJ = 0
-                # 右轮廓录入
-                if img_array[i][img_array.shape[1] - i-1] == 255 and rightCJ == 1:
-                    rightContour[0].append(img_array.shape[1] - i-1)
-                    rightContour[1].append(y)
-                    rightCJ = 0
+    for i in range(len(xy[1])):
+        leftContour[0].append(xy[0][i][0])
+        leftContour[1].append(xy[1][i][0])
+        rightContour[0].append(xy[0][i][-1])
+        rightContour[1].append(xy[1][i][-1])
 
-                # 缺口修补
-                if((i+1) < newImage.shape[0]/4 and img_array[i+1][x] > 1):
-                    for k in range(1, int(newImage.shape[0]/8)):
-                        if(img_array[i+1+k][x] < 255):
-                            for l in range(k+1):
-                                img_array[i+1+l][x] = 0
-                            break
-        contourIndex = len(rightContour[0])
-        if i == contourIndex-1:
-            pixelStatistics.append(rightContour[0][i]-leftContour[0][i])
-    print(len(rightContour[0]))
-    der1Contour = np.diff(pixelStatistics)
-    topLimit = np.array(signal.argrelextrema(der1Contour, np.less)[0])[0]
-    # 右轮廓判定后，下一有效值必为左边界，故可以不判定
-    rightContourLimitJ = 1
-    for i in signal.argrelextrema(der1Contour, np.greater)[0]:
-        if der1Contour[i] > 200:
-            if rightContourLimitJ == 1:
-                rightContourLimit = i
-                rightContourLimitJ = 0
-            else:
-                leftContourLimit = i
-                break
+    leftContourLimit = getBottomLineByColumn(img)
+    fittingAssess = 0
+    fittingAssessList = []
+    for i in range(int(img.shape[0]/100)):
+        y = leftContour[1][:leftContourLimit - i]
+        x = leftContour[0][:leftContourLimit-i]
+        Factor = np.polyfit(y, x, 14)
+        F = np.poly1d(Factor)
+        fX = F(y)
+        fittingAssessList.append(fittingAssess/fittingAssessment(fX, x))
+        fittingAssess = fittingAssessment(fX, x)
+    leftContourLimit -= fittingAssessList.index(max(fittingAssessList))
+    leftContour[0] = leftContour[0][:leftContourLimit]
+    leftContour[1] = leftContour[1][:leftContourLimit]
+    for i in range(len(imgData[1])):
+        # print(i)
+        if imgData[1][i] == leftContourLimit:
+            imgData[0] = imgData[0][:i]
+            imgData[1] = imgData[1][:i]
+            break
 
     pylab.figure(figsize=(16, 9))
-    pylab.plot(img[0], img[1], 'black')
-    # pylab.ylim(0, 720)
-    pylab.xlim(leftContourLimit, 1280)
+    pylab.plot(imgData[0],  imgData[1], 'black')
+    pylab.ylim(720, 0)
+    pylab.xlim(0, 1280)
     pylab.xlabel('')
     pylab.ylabel('')
     pylab.axis('off')
     pylab.legend(loc=3, borderaxespad=0., bbox_to_anchor=(0, 0))
     pylab.margins(0.0)
-    pylab.savefig(imageSavePath+"sil" +
-                  fileName+".jpg", dpi=110, bbox_inches='tight', pad_inches=0
-                  )
-    return "sil" + fileName+".jpg"
+    pylab.savefig('./upload/images/sil2.jpg', dpi=110,
+                  bbox_inches='tight', pad_inches=0)
+    pylab.show()
 
 
 def factorToPoly(Factor):
